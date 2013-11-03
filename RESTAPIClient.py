@@ -5,7 +5,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 
 # configuration
-DATABASE = '/tmp/flaskr.db'
+DATABASE = '/tmp/RESTAPIClient.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
@@ -15,7 +15,7 @@ PASSWORD = 'default'
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+app.config.from_envvar('RESTAPICLIENT_SETTINGS', silent=True)
 
 
 def init_db():
@@ -41,14 +41,14 @@ def teardown_request(exception):
         db.close()
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def show_entries():
     cur = g.db.execute('select title, text from entries order by id desc')
     entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
 
-@app.route('/add', methods=['POST'])
+@app.route('/', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
