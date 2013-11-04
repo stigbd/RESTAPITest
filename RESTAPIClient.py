@@ -43,8 +43,9 @@ def teardown_request(exception):
 
 @app.route('/', methods=['GET'])
 def show_entries():
-    cur = g.db.execute('select title, text from entries order by id desc')
-    entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
+    cur = g.db.execute('select verb, url, body from entries order by id desc')
+    entries = [dict(verb=row[0], url=row[1],
+    body=row[2]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
 
@@ -52,10 +53,11 @@ def show_entries():
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
-    g.db.execute('insert into entries (title, text) values (?, ?)',
-                 [request.form['title'], request.form['text']])
+    g.db.execute('insert into entries (verb, url, body) values (?, ?, ?)',
+                 [request.form['verb'], request.form['url'],
+                 request.form['body']])
     g.db.commit()
-    flash('New entry was successfully posted')
+    flash('New request was successfully submitted')
     return redirect(url_for('show_entries'))
 
 
