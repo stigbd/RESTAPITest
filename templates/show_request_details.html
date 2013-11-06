@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+{% block body %}
+
+  <ul class=request>
+    <li>{{ request.id }} {{ request.verb|safe }} {{ request.url|safe }} {{ request.status_code|safe }}
+  </ul>
+{% endblock %}
