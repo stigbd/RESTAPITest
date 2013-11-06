@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block body %}
+  {% if session.logged_in %}
+    <form action="{{ url_for('add_request') }}" method=post class=add-request>
+      <dl>
+        <dt>Verb:
+        <dd><select name="verb">
+            <option selected> GET
+            <option> POST
+            <option> PUT
+            <option> DELETE
+            <option> HEAD
+            <option> OPTIONS
+            </select>
+        <dt>Protocol:
+        <dd><select name="protocol">
+            <option selected> http
+            <option> https
+            </select>
+        <dt>Url:
+        <dd><input type=text size=30 name=url>
+        <dt>Header:
+        <dd><input type=text size=30 name=header>
+        <dt>Body:
+        <dd><textarea name=body rows=5 cols=40></textarea>
+        <dd><input type=submit value=Submit>
+      </dl>
+    </form>
+  {% endif %}
+  <ul class=requests>
+  {% for request in requests %}
+    <li>{{ request.id }} {{ request.verb|safe }} {{ request.url|safe }} {{ request.status_code|safe }}
+  {% else %}
+    <li><em>Unbelievable.  No requests here so far</em>
+  {% endfor %}
+  </ul>
+{% endblock %}

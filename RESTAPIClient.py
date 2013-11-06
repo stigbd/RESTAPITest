@@ -1,5 +1,6 @@
 # all the imports
 import sqlite3
+import RESTRequest
 from contextlib import closing
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
@@ -42,23 +43,39 @@ def teardown_request(exception):
 
 
 @app.route('/', methods=['GET'])
-def show_entries():
-    cur = g.db.execute('select verb, url, body from entries order by id desc')
-    entries = [dict(verb=row[0], url=row[1],
-    body=row[2]) for row in cur.fetchall()]
-    return render_template('show_entries.html', entries=entries)
+def show_requests():
+    cur = g.db.execute('select request.id, verb, url, status_code from request, response ' +
+                        'where request.id = response.fk_request_id ' +
+                        'order by request.id desc')
+    requests = [dict(id=row[0], verb=row[1], url=row[2], status_code=row[3]) for row in cur.fetchall()]
+    return render_template('show_requests.html', requests=requests)
 
 
 @app.route('/', methods=['POST'])
-def add_entry():
+def add_request():
     if not session.get('logged_in'):
         abort(401)
-    g.db.execute('insert into entries (verb, url, body) values (?, ?, ?)',
-                 [request.form['verb'], request.form['url'],
-                 request.form['body']])
+    # Get form-data:
+    protocol = request.form['protocol']
+    url = request.form['url']
+    # Create request and get response:
+    response = RESTRequest.get_data(protocol, url)
+    url = response.url
+    body = response.text
+    status_code = response.status_code
+    cur = g.db.execute('select max(id) from request')
+    oldId = cur.fetchone()[0]
+    if oldId is None:
+        newId = 1
+    else:
+        newId = oldId + 1
+    g.db.execute('insert into request (id, verb, url) values (?, ?, ?)',
+                 [newId, request.form['verb'], url])
+    g.db.execute('insert into response (fk_request_id, status_code, body) values (?, ?, ?)',
+                 [newId, status_code, body])
     g.db.commit()
     flash('New request was successfully submitted')
-    return redirect(url_for('show_entries'))
+    return redirect(url_for('show_requests'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -72,7 +89,7 @@ def login():
         else:
             session['logged_in'] = True
             flash('You were logged in')
-            return redirect(url_for('show_entries'))
+            return redirect(url_for('show_requests'))
     return render_template('login.html', error=error)
 
 
@@ -80,7 +97,7 @@ def login():
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
-    return redirect(url_for('show_entries'))
+    return redirect(url_for('show_requests'))
 
 
 if __name__ == '__main__':
