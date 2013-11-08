@@ -3,7 +3,7 @@ import requests
 import json
 
 
-def get_data(protocol, url):
+def get_data(protocol, url, headers):
     # TODO: get headers and query-parameters as parameters
     # feks headers: sjekk
     # http://docs.python-requests.org/en/latest/user/quickstart/#passing-parameters-in-urls

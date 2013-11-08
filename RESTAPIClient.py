@@ -4,6 +4,8 @@ import RESTRequest
 from contextlib import closing
 from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
+import logging
+import locale
 
 # configuration
 DATABASE = './RESTAPIClient.db'
@@ -18,6 +20,7 @@ app.config.from_object(__name__)
 
 app.config.from_envvar('RESTAPICLIENT_SETTINGS', silent=True)
 
+language, output_encoding = locale.getdefaultlocale()
 
 def init_db():
     with closing(connect_db()) as db:
@@ -58,8 +61,9 @@ def add_request():
     # Get form-data:
     protocol = request.form['protocol']
     url = request.form['url']
+    headers = ''
     # Create request and get response:
-    response = RESTRequest.get_data(protocol, url)
+    response = RESTRequest.get_data(protocol, url, headers)
     url = response.url
     body = response.text
     status_code = response.status_code
@@ -76,6 +80,22 @@ def add_request():
     g.db.commit()
     flash('New request was successfully submitted')
     return redirect(url_for('show_requests'))
+
+@app.route('/<requestId>')
+def show_request_details(requestId):
+    if requestId is None:
+        abort(400)
+    cur = g.db.execute('select request.id, verb, url, status_code, body from request, response ' +
+                        'where request.id = response.fk_request_id ' +
+                        'and request.id = :Id', {"Id": requestId})
+    row = cur.fetchone()
+    request.id = row[0]
+    request.verb = row[1]
+    request.url = row[2]
+    request.status_code = row[3]
+    request.body = row[4]
+    logging.warning( 'Request: %s, %s, %s, %s, %s', request.id, request.verb.encode(output_encoding), request.url, request.status_code, request.body.encode(output_encoding))
+    return render_template('show_request_details.html', request=request)
 
 
 @app.route('/login', methods=['GET', 'POST'])
