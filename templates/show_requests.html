@@ -29,7 +29,7 @@
   {% endif %}
   <ul class=requests>
   {% for request in requests %}
-    <li>{{ request.id }} {{ request.verb|safe }} {{ request.url|safe }} {{ request.status_code|safe }}
+    <li><a href="{{ url_for('show_request_details', requestId=request.id) }}">{{request.id}}</a> {{ request.verb|safe }} {{ request.url|safe }} {{ request.status_code|safe }}
   {% else %}
     <li><em>Unbelievable.  No requests here so far</em>
   {% endfor %}

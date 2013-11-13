@@ -6,6 +6,8 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 import logging
 import locale
+import os
+from flask import send_from_directory
 
 # configuration
 DATABASE = './RESTAPIClient.db'
@@ -62,6 +64,7 @@ def add_request():
     protocol = request.form['protocol']
     url = request.form['url']
     headers = ''
+    logging.warning('header: %s', request.form)
     # Create request and get response:
     response = RESTRequest.get_data(protocol, url, headers)
     url = response.url
@@ -81,10 +84,18 @@ def add_request():
     flash('New request was successfully submitted')
     return redirect(url_for('show_requests'))
 
+
+@app.route('/favicon.ico')
+def favicon():
+    logging.warning("Handler for favicon.ico")
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/png')
+
 @app.route('/<requestId>')
 def show_request_details(requestId):
     if requestId is None:
         abort(400)
+    logging.warning('RequestId: %s', requestId)
     cur = g.db.execute('select request.id, verb, url, status_code, body from request, response ' +
                         'where request.id = response.fk_request_id ' +
                         'and request.id = :Id', {"Id": requestId})
